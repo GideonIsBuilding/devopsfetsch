@@ -14,6 +14,9 @@ red_echo() {
      echo -e "\e[31m$1\e[0m"
 }
 
+#---------------------------------
+# Function to display docker images
+#---------------------------------
 dockerImages() {
      if [ -n "$1" ]; then
           docker inspect "$1"
@@ -66,6 +69,9 @@ showMenu() {
      echo "  devopsfetch -t '2023-01-01 00:00:00' '2023-01-31 23:59:59'"
 }
 
+#---------------------------------
+# Function to display domain config
+#---------------------------------
 nginxDomainConfig() {
      if [ -n "$1" ]; then
           grep -r -A 20 -B 5 "server_name.*$1" /etc/nginx/
@@ -74,6 +80,9 @@ nginxDomainConfig() {
      fi
      }
 
+#---------------------------------
+# Function to display nginx ports
+#---------------------------------
 nginxDomain() {
      echo -e "DOMAIN\t\t\t\tPORT"
      echo -e "------\t\t\t\t----"
@@ -94,6 +103,9 @@ nginxDomain() {
      ' | column -t
      }
 
+#---------------------------------------------------------
+# Function to display active ports or more info about them
+#---------------------------------------------------------
 activePort() {
      if [ -z "$1" ]; then
           green_echo "Active Ports and Services:"
@@ -104,6 +116,9 @@ activePort() {
      fi
 }
 
+#---------------------------------
+# Function to display users info
+#---------------------------------
 displayUsers() {
      if [ -n "$1" ]; then
           green_echo "Information for user $1:"
@@ -115,6 +130,9 @@ displayUsers() {
      fi
 }
 
+#------------------------------------------------------
+# Function to display activities within a specific time
+#------------------------------------------------------
 activitiesTimeRange() {
      if [ -z "$1" ] || [ -z "$2" ]; then
           red_echo "Please provide both start and end times in this format YYYY-MM-DD."
@@ -124,6 +142,9 @@ activitiesTimeRange() {
           journalctl --since "$1" --until "$2"
 }
 
+#-------------------------------------
+# Main script logic using users' input
+#-------------------------------------
 case "$1" in
      -p|--port)
           activePort "$2"
