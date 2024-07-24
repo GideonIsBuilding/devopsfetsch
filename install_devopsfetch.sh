@@ -18,8 +18,8 @@ fi
 #------------------------------------------
 # Copy devopsfetch script to /usr/local/bin
 #------------------------------------------
-cp devopsfetch /usr/local/bin/
-chmod +x /usr/local/bin/devopsfetch
+cp devopsfetch.sh /usr/local/bin/
+chmod +x /usr/local/bin/devopsfetch.sh
 
 #----------------------------
 # Create systemd service file
@@ -30,7 +30,7 @@ Description=DevOpsFetch Monitoring Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/devopsfetch -t \$(date -d '1 hour ago' +'%Y-%m-%d %H:%M:%S') \$(date +'%Y-%m-%d %H:%M:%S')
+ExecStart=/usr/local/bin/devopsfetch.sh -t \$(date -d '1 hour ago' +'%Y-%m-%d %H:%M:%S') \$(date +'%Y-%m-%d %H:%M:%S')
 Restart=always
 User=root
 

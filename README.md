@@ -8,7 +8,7 @@ DevOpsFetch is a tool for DevOps that collects and displays system information, 
 
 2. Make both scripts executable:
    ```
-   $ chmod +x devopsfetch install_devopsfetch.sh
+   chmod +x devopsfetch.sh install_devopsfetch.sh
    ```
 
 3. Run the installation script as root:
