@@ -18,12 +18,27 @@ red_echo() {
 # Function to display docker images
 #---------------------------------
 dockerImages() {
-     if [ -n "$1" ]; then
-          docker inspect "$1"
-     else
-          docker ps -a
-          docker images
-     fi
+    if [ -n "$1" ]; then
+        docker inspect "$1"
+    else
+        green_echo "Docker Containers:"
+        printf "+------------------------+---------------------------------+--------+----------------+\n"
+        printf "| %-22s | %-31s | %-6s | %-14s |\n" "CONTAINER ID" "IMAGE" "STATUS" "PORTS"
+        printf "+------------------------+---------------------------------+--------+----------------+\n"
+        docker ps -a --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | awk '{
+            printf "| %-22s | %-31s | %-6s | %-14s |\n", substr($1, 1, 12), $2, $3, $4
+        }'
+        printf "+------------------------+---------------------------------+--------+----------------+\n"
+
+        green_echo "\nDocker Images:"
+        printf "+---------------------------+------------+--------------+------------+\n"
+        printf "| %-25s | %-10s | %-12s | %-10s |\n" "REPOSITORY" "TAG" "IMAGE ID" "SIZE"
+        printf "+---------------------------+------------+--------------+------------+\n"
+        docker images --format "{{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}" | awk '{
+            printf "| %-25s | %-10s | %-12s | %-10s |\n", $1, $2, substr($3, 1, 12), $4
+        }'
+        printf "+---------------------------+------------+--------------+------------+\n"
+    fi
 }
 
 #---------------------------------
@@ -84,36 +99,50 @@ nginxDomainConfig() {
 # Function to display nginx ports
 #---------------------------------
 nginxDomain() {
-     echo -e "DOMAIN\t\t\t\tPORT"
-     echo -e "------\t\t\t\t----"
-     sudo nginx -T 2>/dev/null | awk '
-     /server_name/ { 
-          server_name = $2; 
-          for (i=3; i<=NF; i++) {
-               server_name = server_name " " $i; 
-          }
-     } 
-     /listen/ { 
-          listen = $2; 
-          gsub(";", "", listen); # Remove semicolon
-          if (server_name != "") {
-               print server_name "\t" listen;
-          }
-     }
-     ' | column -t
-     }
+    green_echo "Nginx Domains and Ports:"
+    printf "+--------------------------------+------------+\n"
+    printf "| %-30s | %-10s |\n" "DOMAIN" "PORT"
+    printf "+--------------------------------+------------+\n"
+    sudo nginx -T 2>/dev/null | awk '
+    /server_name/ { 
+        server_name = $2; 
+        for (i=3; i<=NF; i++) {
+            server_name = server_name " " $i; 
+        }
+    } 
+    /listen/ { 
+        listen = $2; 
+        gsub(";", "", listen);
+        if (server_name != "") {
+            printf "| %-30s | %-10s |\n", server_name, listen;
+        }
+    }'
+    printf "+--------------------------------+------------+\n"
+}
 
 #---------------------------------------------------------
 # Function to display active ports or more info about them
 #---------------------------------------------------------
 activePort() {
-     if [ -z "$1" ]; then
-          green_echo "Active Ports and Services:"
-          sudo lsof -i -P -n | grep LISTEN
-     else
-          green_echo "Information for port $1:"
-          sudo lsof -i ":$1"
-     fi
+    if [ -z "$1" ]; then
+        green_echo "Active Ports and Services:"
+        printf "+--------+--------+------------+-------------------+\n"
+        printf "| %-6s | %-6s | %-10s | %-17s |\n" "PID" "PORT" "PROTOCOL" "PROCESS"
+        printf "+--------+--------+------------+-------------------+\n"
+        sudo lsof -i -P -n | grep LISTEN | awk '{
+            printf "| %-6s | %-6s | %-10s | %-17s |\n", $2, substr($9, index($9,":")+1), $8, $1
+        }'
+        printf "+--------+--------+------------+-------------------+\n"
+    else
+        green_echo "Information for port $1:"
+        printf "+--------+--------+------------+-----------------+\n"
+        printf "| %-6s | %-6s | %-10s | %-15s |\n" "PID" "PORT" "PROTOCOL" "PROCESS"
+        printf "+--------+--------+------------+-----------------+\n"
+        sudo lsof -i ":$1" | awk 'NR>1 {
+            printf "| %-6s | %-6s | %-10s | %-15s |\n", $2, substr($9, index($9,":")+1), $8, $1
+        }'
+        printf "+--------+--------+------------+-----------------+\n"
+    fi
 }
 
 #---------------------------------
