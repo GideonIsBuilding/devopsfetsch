@@ -7,6 +7,12 @@ green_echo() {
      echo -e "\e[32m$1\e[0m"
 }
 
+#-------------------------
+# install docker and nginx
+#-------------------------
+apt-get update
+apt-get install -y docker.io nginx
+
 #-------------------------------
 # Check if script is run as root
 #-------------------------------
