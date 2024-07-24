@@ -1,42 +1,83 @@
-# Devops MID INTERNSHIP TASK
+# DevOpsFetch
 
-### Building devopsfetch for Server Information Retrieval and Monitoring
+DevOpsFetch is a tool for DevOps that collects and displays system information, including active ports, user logins, Nginx configurations, Docker images, and container statuses.
 
-Develop a tool for DevOps named `devopsfetch` that collects and displays system information, including active ports, user logins, Nginx configurations, Docker images, and container statuses. Implement a systemd service to monitor and log these activities continuously.
+## Installation
 
-## Requirements
+1. Clone this repository or download the `devopsfetch` and `install_devopsfetch.sh` scripts.
 
-### Information Retrieval
+2. Make both scripts executable:
+   ```
+   $ chmod +x devopsfetch install_devopsfetch.sh
+   ```
 
-**1. Ports**
-- Display all active ports and services (`-p` or `--port`).
-- Provide detailed information about a specific port (`-p <port_number>`).
+3. Run the installation script as root:
+   ```
+   sudo ./install_devopsfetch.sh
+   ```
 
-**2. Docker**
-- List all Docker images and containers (`-d` or `--docker`).
-- Provide detailed information about a specific container (`-d <container_name>`).
+This will install the necessary dependencies, set up the DevOpsFetch script, and create a systemd service for continuous monitoring.
 
-**3. Nginx**
-- Display all Nginx domains and their ports (`-n` or `--nginx`).
-- Provide detailed configuration information for a specific domain (`-n <domain>`).
+## Usage
 
-**4. Users**
-- List all users and their last login times (`-u` or `--users`).
-- Provide detailed information about a specific user (`-u <username>`).
+DevOpsFetch can be used with the following command-line flags:
 
-**5. Time Range**
-- Display activities within a specified time range (`-t` or `--time`).
+```
+devopsfetch [OPTION]... [ARGUMENT]...
+```
 
-### Output Formatting
-- Ensure all outputs are formatted for readability, in well-formatted tables with descriptive column names.
+Options:
+- `-p, --port [PORT]`: Display active ports or specific port info
+- `-d, --docker [CONTAINER]`: List Docker images/containers or specific container info
+- `-n, --nginx [DOMAIN]`: Display Nginx domains/ports or specific domain config
+- `-u, --users [USERNAME]`: List users and last login or specific user info
+- `-t, --time START END`: Display activities within specified time range
+- `-h, --help`: Display help message
 
-### Installation Script
-- Create a script to install necessary dependencies and set up a systemd service to monitor and log activities.
-- Implement continuous monitoring mode with logging to a file, ensuring log rotation and management.
+Examples:
+```
+devopsfetch -p                 # List all active ports
+devopsfetch -p 80              # Show details for port 80
+devopsfetch -d                 # List all Docker images and containers
+devopsfetch -d mycontainer     # Show details for 'mycontainer'
+devopsfetch -n                 # List all Nginx domains and ports
+devopsfetch -n example.com     # Show config for 'example.com'
+devopsfetch -u                 # List all users and last login times
+devopsfetch -u johndoe         # Show details for user 'johndoe'
+devopsfetch -t '2023-01-01 00:00:00' '2023-01-31 23:59:59'
+                               # Show activities in January 2023
+```
 
-### Help and Documentation
-1. Implement a help flag `-h` or `--help` to provide usage instructions for the program.
-2. Write clear and comprehensive documentation covering:
-    - Installation and configuration steps.
-    - Usage examples for each command-line flag.
-    - The logging mechanism and how to retrieve logs.
+## Logging
+
+DevOpsFetch logs its activities continuously using a systemd service. Logs are stored in `/var/log/devopsfetch.log`. Log rotation is set up to manage log file sizes and retain logs for 7 days.
+
+To view the logs:
+```
+sudo journalctl -u devopsfetch.service
+```
+
+or
+
+```
+sudo cat /var/log/devopsfetch.log
+```
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Check if the service is running:
+   ```
+   sudo systemctl status devopsfetch.service
+   ```
+2. View the logs for any error messages:
+   ```
+   sudo journalctl -u devopsfetch.service
+   ```
+3. Ensure all dependencies are installed:
+   ```
+   sudo apt-get install docker.io nginx
+   ```
+
+For further assistance, please open an issue in the GitHub repository.
