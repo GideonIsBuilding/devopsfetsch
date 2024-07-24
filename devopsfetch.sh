@@ -14,10 +14,19 @@ red_echo() {
      echo -e "\e[31m$1\e[0m"
 }
 
+dockerImages() {
+     if [ -n "$1" ]; then
+          docker inspect "$1"
+     else
+          docker ps -a
+          docker images
+     fi
+}
+
 #---------------------------------
 # Function to display help message
 #---------------------------------
-display_help() {
+showMenu() {
      clear
      echo "++++++++++++DEVOPSFETCH Manual ++++++++++++"
      echo ""
@@ -46,87 +55,101 @@ display_help() {
      echo "++++++++++++++++++++++++++++++++++++++++++++++++"
      echo ""
      echo "Examples:"
-     echo "  devopsfetch -p                 # List all active ports"
-     echo "  devopsfetch -p 80              # Show details for port 80"
      echo "  devopsfetch -d                 # List all Docker images and containers"
      echo "  devopsfetch -d mycontainer     # Show details for 'mycontainer'"
      echo "  devopsfetch -n                 # List all Nginx domains and ports"
      echo "  devopsfetch -n example.com     # Show config for 'example.com'"
+     echo "  devopsfetch -p                 # List all active ports"
+     echo "  devopsfetch -p 80              # Show details for port 80"
      echo "  devopsfetch -u                 # List all users and last login times"
      echo "  devopsfetch -u johndoe         # Show details for user 'johndoe'"
      echo "  devopsfetch -t '2023-01-01 00:00:00' '2023-01-31 23:59:59'"
 }
 
-if [ -z "$1" ]; then
-     red_echo "Error: No flag provided."
-     exit 1
-fi
-
-# Define allowed flags
-allowed_flags="d h n p u t"
-
-# Check if the first argument is an allowed flag
-if [[ ! "$allowed_flags" =~ "$1" ]]; then
-     red_echo "Invalid flag. Please enter one of the following flags: d, h, n, p, u, t"
-     exit 1
-else
-     green_echo "Valid flag: $1"
-     # You can add further processing for the valid flags here
-fi
-
-
-display_help
-
-dockerImages() {
-     echo "Docker Images and Containers:"
-     docker ps -a && docker images
-     read -rp "Press any key to Continue...."
-}
-
-help() {
-     echo "Program Usage Intructions:"
-     display_help
-     read -rp "Press any key to Continue...."
-}
+nginxDomainConfig() {
+     if [ -n "$1" ]; then
+          grep -r -A 20 -B 5 "server_name.*$1" /etc/nginx/
+     else
+          echo "Error: No domain provided."
+     fi
+     }
 
 nginxDomain() {
-     echo "Nginx Domains and Ports:"
-     sudo nginx -T | grep "server_name " && grep -r "listen" /etc/nginx | grep -oP "listen\s+\K(\d+)"
-     read -rp "Press any key to Continue...."
-}
+     echo -e "DOMAIN\t\t\t\tPORT"
+     echo -e "------\t\t\t\t----"
+     sudo nginx -T 2>/dev/null | awk '
+     /server_name/ { 
+          server_name = $2; 
+          for (i=3; i<=NF; i++) {
+               server_name = server_name " " $i; 
+          }
+     } 
+     /listen/ { 
+          listen = $2; 
+          gsub(";", "", listen); # Remove semicolon
+          if (server_name != "") {
+               print server_name "\t" listen;
+          }
+     }
+     ' | column -t
+     }
 
 activePort() {
      if [ -z "$1" ]; then
-          echo "Active Ports and Services:"
+          green_echo "Active Ports and Services:"
           sudo lsof -i -P -n | grep LISTEN
      else
-          echo "Information for port $1:"
+          green_echo "Information for port $1:"
           sudo lsof -i ":$1"
-          sudo lsof -i -P -n | grep LISTEN | grep "$1"
      fi
+}
+
+displayUsers() {
+     if [ -n "$1" ]; then
+          green_echo "Information for user $1:"
+          id "$1"
+          green_echo "Last login:"
+          last "$1" | head -n1
+     else
+          lastlog
+     fi
+}
+
+activitiesTimeRange() {
+     if [ -z "$1" ] || [ -z "$2" ]; then
+          red_echo "Please provide both start and end times in this format YYYY-MM-DD."
+          return 1
+     fi
+          green_echo "Activities between $1 and $2:"
+          journalctl --since "$1" --until "$2"
 }
 
 case "$1" in
      -p|--port)
-          display_ports "$2"
+          activePort "$2"
           ;;
      -d|--docker)
-          display_docker "$2"
+          dockerImages "$2"
           ;;
      -n|--nginx)
-          display_nginx "$2"
+          if [ -n "$2" ]; then
+               nginxDomainConfig "$2"
+          else
+               nginxDomain
+          fi
+          exit 0
           ;;
      -u|--users)
-          display_users "$2"
+          displayUsers "$2"
           ;;
      -t|--time)
-          display_time_range "$2" "$3"
+          activitiesTimeRange "$2" "$3"
           ;;
      -h|--help)
-          display_help
+          showMenu
           ;;
      *)
-          echo "Invalid option. Use -h or --help for usage information."
+          red_echo "Invalid option. Use -h or --help for usage information."
           exit 1
           ;;
      esac
