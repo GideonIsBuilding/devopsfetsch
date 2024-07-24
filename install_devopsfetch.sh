@@ -25,6 +25,7 @@ fi
 # Copy devopsfetch script to /usr/local/bin
 #------------------------------------------
 cp devopsfetch.sh /usr/local/bin/
+sudo chown $USER:$USER /usr/local/bin/devopsfetch.sh
 chmod +x /usr/local/bin/devopsfetch.sh
 
 #----------------------------
@@ -36,9 +37,9 @@ Description=DevOpsFetch Monitoring Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/devopsfetch.sh -t \$(date -d '1 hour ago' +'%Y-%m-%d %H:%M:%S') \$(date +'%Y-%m-%d %H:%M:%S')
-Restart=always
-User=root
+Type=oneshot
+ExecStart=/bin/bash -c '/usr/local/bin/devopsfetch.sh -t "$(date -d "1 hour ago" +"%Y-%m-%d %H:%M:%S")" "$(date +"%Y-%m-%d %H:%M:%S")"'
+User=%%
 
 [Install]
 WantedBy=multi-user.target
